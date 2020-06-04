@@ -29,6 +29,12 @@ class EventTimer():
     def gettime(self):
         return time.time() - self.beginTimestamp
 
+def genPredCSV(predictions, file):
+    with open(file, 'w') as f:
+        print('UserId,ItemId', file = f)
+        for i, row in enumerate(predictions):
+            print(f'{i},{" ".join(map(str, row))}', file = f)
+
 def pickleSave(obj, file):
     with open(file, 'wb') as f:
         pickle.dump(obj, f)

@@ -9,6 +9,9 @@ class Embedding(nn.Module):
     def forward(self, x):
         return torch.matmul(x, self.W)
 
+    def getEmbedding(self):
+        return self.W.detach().numpy()
+
 class MF(nn.Module):
     def __init__(self, N, M, F):
         super().__init__()
@@ -18,6 +21,14 @@ class MF(nn.Module):
 
         self.userEmbedding = Embedding(M, F)
         self.itemEmbedding = Embedding(N, F)
+
+    def getUserEmbedding(self, userVectors):
+        W = self.userEmbedding.getEmbedding()
+        return userVectors @ W
+    
+    def getItemEmbedding(self, itemVectors):
+        W = self.itemEmbedding.getEmbedding()
+        return itemVectors @ W
 
     def forward(self, user, item):
         '''
@@ -30,4 +41,4 @@ Returns:
         userEmb = self.userEmbedding(user)
         itemEmb = self.itemEmbedding(item)
 
-        return torch.sum(userEmb * itemEmb, dim = 1)
+        return torch.sigmoid(torch.sum(userEmb * itemEmb, dim = 1)).reshape(-1, 1)

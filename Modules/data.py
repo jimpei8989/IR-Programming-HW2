@@ -9,7 +9,7 @@ class RSDataset(torch.utils.data.Dataset):
         super().__init__()
         self.mat = torch.FloatTensor(mat)
         self.X = np.load(os.path.join(datadir, f'{name}X.npy'))
-        self.Y = torch.FloatTensor(np.load(os.path.join(datadir, f'{name}Y.npy')))
+        self.Y = torch.FloatTensor(np.load(os.path.join(datadir, f'{name}Y.npy'))).reshape(-1, 1)
 
     def __len__(self):
         return self.X.shape[0]

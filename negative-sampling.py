@@ -2,7 +2,6 @@ import os
 import numpy as np
 from argparse import ArgumentParser
 from collections import deque
-from tqdm import tqdm
 
 from sklearn.model_selection import train_test_split
 from Modules.utils import *
@@ -26,7 +25,7 @@ def main():
     # Create output directory
     outputDir = os.path.join(args.datadir, args.name)
     if os.path.isdir(outputDir):
-        print('! Warning: the directory already exists. Exiting......')
+        print(f'! Warning: directory {outputDir} already exists. Exiting......')
         exit()
     else:
         os.mkdir(outputDir)
@@ -39,7 +38,7 @@ def main():
             data = map(lambda p : list(map(int, p[1].split(' '))), data)
             data = list(data)
     
-        N = len(data) + 1
+        N = len(data)
         M = max(max(d) for d in data) + 1
         print(f'> #Users: {N}')
         print(f'> #Items: {M}')
@@ -56,7 +55,7 @@ def main():
     with EventTimer('Negative Sampling'):
         X, Y = [], []
         ri = RandInt(high = M)
-        for uid, items in tqdm(enumerate(data)):
+        for uid, items in enumerate(data):
             X += [(uid, item) for item in items]
             Y += [1] * len(items)
 
