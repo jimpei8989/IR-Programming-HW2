@@ -12,7 +12,7 @@ class Embedding(nn.Module):
     def getEmbedding(self):
         return self.W.detach().numpy()
 
-class MF(nn.Module):
+class MFBCE(nn.Module):
     def __init__(self, N, M, F):
         super().__init__()
         self.N = N

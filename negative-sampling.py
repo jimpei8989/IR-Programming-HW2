@@ -51,45 +51,37 @@ def main():
 
         np.save(os.path.join(args.datadir, 'mat.npy'), mat)
 
+    allData = []
+
     # Negative Sampling
     with EventTimer('Negative Sampling'):
-        X, Y = [], []
         ri = RandInt(high = M)
-        for uid, items in enumerate(data):
-            X += [(uid, item) for item in items]
-            Y += [1] * len(items)
-
-            m = len(items)
-            items = set(items)
-            for _ in range(m):
+        for uid, pos in enumerate(data):
+            allItems = set(pos)
+            neg = []
+            for _ in range(len(pos)):
                 while True:
                     negItem = ri()
                     if negItem not in items:
                         break
-                X.append((uid, negItem))
-                items.add(negItem)
-                Y.append(0)
+                neg.append(negItem)
+                allItems.add(negItem)
+            allData.append((pos, neg))
 
-        X = np.stack(list(map(lambda p : np.array(p), X)))
-        Y = np.stack(Y)
+    # Split train / validation
+    with EventTimer('Split Train / Validation'):
+        trainData, validData = [], []
+        for uid, (pos, neg) in enumerate(allData):
+            m = int(len(pos) * 0.8)
+            np.random.shuffle(pos)
+            np.random.shuffle(neg)
+            trainData.append((pos[:m], neg[:m]))
+            validData.append((pos[m:], neg[m:]))
 
-        print(f'> X.shape: {X.shape}')
-        print(f'> Y.shape: {Y.shape}')
-
-    # Split
-    with EventTimer('Split data'):
-        trainX, validX, trainY, validY = train_test_split(X, Y, test_size = 0.2, random_state = SEED)
-        print(f'> training\tX: {trainX.shape}\t| Y: {trainY.shape}')
-        print(f'> validation\tX: {validX.shape}\t| Y: {validY.shape}')
-    
-    # Write to file
-    with EventTimer('Write to file'):
-        np.save(os.path.join(outputDir, 'X.npy'), X)
-        np.save(os.path.join(outputDir, 'Y.npy'), Y)
-        np.save(os.path.join(outputDir, 'trainX.npy'), trainX)
-        np.save(os.path.join(outputDir, 'trainY.npy'), trainY)
-        np.save(os.path.join(outputDir, 'validX.npy'), validX)
-        np.save(os.path.join(outputDir, 'validY.npy'), validY)
+    # Save to file
+    with EventTimer('Save to file'):
+        pickleSave(trainData, os.path.join(outputDir, 'train.pkl'))
+        pickleSave(validData, os.path.join(outputDir, 'valid.pkl'))
 
 def parseArguments():
     parser = ArgumentParser()
