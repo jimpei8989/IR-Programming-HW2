@@ -40,17 +40,8 @@ class BPRDataset(torch.utils.data.Dataset):
     def __init__(self, mat, datadir, name='train', epochSize = 1000000):
         # Provided in stackoverflow
         # https://stackoverflow.com/questions/11144513/cartesian-product-of-x-and-y-array-points-into-single-array-of-2d-points
-        def CartesianProduct(*arrays):
-            la = len(arrays)
-            dtype = np.result_type(*arrays)
-            arr = np.empty([len(a) for a in arrays] + [la], dtype=dtype)
-            for i, a in enumerate(np.ix_(*arrays)):
-                arr[...,i] = a
-            return arr.reshape(-1, la)
-
         super().__init__()
         self.mat = torch.FloatTensor(mat)
-        self.epochSize = epochSize
 
         # list of (posList, negList)
         data = pickleLoad(os.path.join(datadir, f'{name}.pkl'))
@@ -59,7 +50,9 @@ class BPRDataset(torch.utils.data.Dataset):
         for uid, (posList, negList) in enumerate(data):
             self.data += [(uid, p, n) for p in posList for n in negList]
 
-        print(len(self.data))
+        self.epochSize = int(epochSize) if epochSize > 1 else int(len(self.data) * epochSize)
+
+        print(f'> Data size: {len(self.data)}')
 
         self.pool = deque()
 
@@ -68,6 +61,7 @@ class BPRDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         if len(self.pool) == 0:
-            self.pool.extend(np.random.choice(self.data, size = self.epochSize))
+            self.pool.extend(np.random.choice(len(self.data), size = self.epochSize))
 
-        return self.pool.popLeft()
+        uid, pos, neg =  self.data[self.pool.popleft()]
+        return self.mat[uid], self.mat[:, pos], self.mat[:, neg]
