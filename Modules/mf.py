@@ -54,13 +54,13 @@ class MFBPR(MF):
     def forward(self, user, posItem, negItem):
         '''
 Arguments:
-    user: a M-dim tensor
-    item: a N-dim tensor
+    user: a (B, M)-dim tensor
+    item: a (B, N)-dim tensor
 Returns:
-    a (batchsize,) tensor, representing the score
+    a (B,) tensor, representing the score
         '''
         userEmb = self.userEmbedding(user)
         posItemEmb = self.itemEmbedding(posItem)
         negItemEmb = self.itemEmbedding(negItem)
 
-        return torch.sigmoid(torch.sum(userEmb * posItemEmb, dim = 1) - torch.sum(userEmb * negItemEmb, dim = 1)).reshape(-1, 1)
+        return -torch.sigmoid(torch.sum(userEmb * posItemEmb, dim = 1) - torch.sum(userEmb * negItemEmb, dim = 1)).reshape(-1, 1) + 2

@@ -75,7 +75,6 @@ def main():
                         loss.backward()
                         optimizer.step()
 
-                    print(loss.item())
                     losses.append(loss.item())
 
             return np.mean(losses)
@@ -99,7 +98,7 @@ def parseArguments():
     parser.add_argument('--matrix')
     parser.add_argument('--latentDim', type=int, default=256)
     parser.add_argument('--batch', type=int, default=256)
-    parser.add_argument('--epochSize', type=float, default=1000000)
+    parser.add_argument('--epochSize', type=float, default=0.05)
     parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--l2', type=float, default=1e-4)
