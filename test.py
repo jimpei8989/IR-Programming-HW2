@@ -7,7 +7,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from Modules.utils import *
-from Modules.mf import MFBCE
+from Modules.mf import MF
 
 def main():
     args = parseArguments()
@@ -24,10 +24,11 @@ def main():
         print(N, M)
 
     with EventTimer('Inference'):
-        model = MFBCE(N, M, args.latentDim)
+        model = MF(N, M, args.latentDim)
+        model.load_state_dict(torch.load(args.weight))
 
-        userEmbeddings = model.getUserEmbedding(mat)
-        itemEmbeddings = model.getItemEmbedding(mat.T)
+        userEmbeddings = model.getUserEmbedding(mat)    # Shape (N, F)
+        itemEmbeddings = model.getItemEmbedding(mat.T)  # Shape (M, F)
 
         predMatrix = userEmbeddings @ itemEmbeddings.T
 
@@ -39,12 +40,14 @@ def main():
             predictions.append(recommendations[:50])
     
     with EventTimer('Generate prediction'):
+        print(len(predictions), len(predictions[0]))
         genPredCSV(predictions, os.path.join(modelDir, 'prediction.csv'))
 
 def parseArguments():
     parser = ArgumentParser()
     parser.add_argument('--name')
     parser.add_argument('--matrix')
+    parser.add_argument('--weight')
     parser.add_argument('--latentDim', type=int, default=256)
     return parser.parse_args()
 

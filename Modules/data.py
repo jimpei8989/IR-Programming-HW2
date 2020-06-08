@@ -9,13 +9,14 @@ from Modules.utils import *
 
 class RandChoice:
     def __init__(self, a, cacheSize = 1000000):
-        self.a = range(a)
-        self.pool = deque()
+        self.a = a
+        self.cacheSize = cacheSize
+        self.pool = deque(np.random.randint(len(self.a), size = self.cacheSize))
     
     def __call__(self):
         if len(self.pool) == 0:
-            self.pool.extend(np.random.choice(self.a, size = self.cacheSize))
-        return self.pool.popleft()
+            self.pool.extend(np.random.randint(len(self.a), size = self.cacheSize))
+        return self.a[self.pool.popleft()]
 
 
 class BCEDataset(torch.utils.data.Dataset):
@@ -25,8 +26,8 @@ class BCEDataset(torch.utils.data.Dataset):
 
         # list of (posList, negList)
         data = pickleLoad(os.path.join(datadir, f'{name}.pkl'))
-        self.posX, self.posY = [], []
-        self.negX, self.negY = [], []
+        self.posX = []
+        self.negX = []
 
         for uid, (posList, negList) in enumerate(data):
             for itemId in posList:
@@ -34,7 +35,7 @@ class BCEDataset(torch.utils.data.Dataset):
             for itemId in negList:
                 self.negX.append((uid, itemId))
 
-        self.numPositive = len(posList)
+        self.numPositive = len(self.posX)
         print(f'> Load {name} data. Positive size: {self.numPositive}')
 
         self.negRD = RandChoice(self.negX)
@@ -45,10 +46,10 @@ class BCEDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         if idx < self.numPositive:
             uid, iid = self.posX[idx]
-            return self.mat[uid], self.mat[:, iid], torch.FloatTensor(1)
+            return self.mat[uid], self.mat[:, iid], torch.FloatTensor([1])
         else:
-            uid, iid = negRD()
-            return self.mat[uid], self.mat[:, iid], torch.FloatTensor(0)
+            uid, iid = self.negRD()
+            return self.mat[uid], self.mat[:, iid], torch.FloatTensor([0])
 
 
 class BPRDataset(torch.utils.data.Dataset):
@@ -61,18 +62,23 @@ class BPRDataset(torch.utils.data.Dataset):
         # list of (posList, negList)
         data = pickleLoad(os.path.join(datadir, f'{name}.pkl'))
 
-        self.data = []
+        num = 0
+        self.uiPairs = list()
+        self.negRD = dict()
         for uid, (posList, negList) in enumerate(data):
-            self.data += [(uid, p, n) for p in posList for n in negList]
+            num += len(posList) * len(negList)
+            self.uiPairs.extend([(uid, p) for p in posList])
+            self.negRD[uid] = RandChoice(negList, cacheSize = 5000)
 
-        print(f'> Data size: {len(self.data)}')
+        print(f'> Data size: {num}')
 
-        self.epochSize = int(epochSize) if epochSize > 1 else int(len(self.data) * epochSize)
-        self.RD = RandChoice(self.data)
+        self.epochSize = epochSize if epochSize > 1 else int(num * epochSize)
+        self.RD = RandChoice(self.uiPairs, cacheSize=5000000)
 
     def __len__(self):
         return self.epochSize
 
     def __getitem__(self, index):
-        uid, pos, neg = self.RD()
+        uid, pos = self.RD()
+        neg = self.negRD[uid]()
         return self.mat[uid], self.mat[:, pos], self.mat[:, neg]

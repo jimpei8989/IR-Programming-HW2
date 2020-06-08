@@ -67,7 +67,7 @@ def main():
                             break
                     neg.append(negItem)
                     allItems.add(negItem)
-            elif args.method == 'all':
+            elif args.method == 'sample':
                 neg = [item for item in range(M) if item not in pos]
 
             allData.append((pos, neg))
@@ -76,11 +76,11 @@ def main():
     with EventTimer('Split Train / Validation'):
         trainData, validData = [], []
         for uid, (pos, neg) in enumerate(allData):
-            m = int(len(pos) * 0.8)
+            p, n = int(len(pos) * 0.8), int(len(neg) * 0.8)
             np.random.shuffle(pos)
             np.random.shuffle(neg)
-            trainData.append((pos[:m], neg[:m]))
-            validData.append((pos[m:], neg[m:]))
+            trainData.append((pos[:p], neg[:n]))
+            validData.append((pos[p:], neg[n:]))
 
     # Save to file
     with EventTimer('Save to file'):

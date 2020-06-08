@@ -47,7 +47,7 @@ def main():
         model = MFBCE(N, M, args.latentDim).cuda()
 
         optimizer = torch.optim.Adam(model.parameters(), lr = args.lr, weight_decay = args.l2)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, threshold=0.5, patience=10, min_lr=1e-7, verbose=True)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, threshold=5e-2, patience=5, min_lr=1e-7, verbose=True)
 
         criterion = nn.BCELoss()
 
@@ -80,8 +80,12 @@ def main():
                 trainLoss, trainAccu = run_epoch(trainDataloader, True)
                 validLoss, validAccu = run_epoch(validDataloader, False)
 
-                scheduler.step(validLoss)
-                print(f'> Epoch {epoch} / {args.epochs}: [{et.gettime():.4f}s] Train Loss: {trainLoss:.6f} ; Accu: {trainAccu:.4f} | Valid Loss: {validLoss:.6f} ; Accu: {validAccu:.4f}')
+            scheduler.step(validLoss)
+            print(f'> Epoch {epoch:3d}/{args.epochs}: [{et.gettime():.4f}s] Train Loss: {trainLoss:.6f} ; Accu: {trainAccu:.4f} | Valid Loss: {validLoss:.6f} ; Accu: {validAccu:.4f}')
+
+            if epoch % 10 == 0:
+                torch.save(model.cpu().state_dict(), os.path.join(modelDir, f'checkpoint-{epoch:03d}.pth'))
+                model.cuda()
 
     with EventTimer('Save model'):
         model.cpu()
@@ -93,7 +97,7 @@ def parseArguments():
     parser.add_argument('--datadir')
     parser.add_argument('--matrix')
     parser.add_argument('--latentDim', type=int, default=256)
-    parser.add_argument('--batch', type=int, default=64)
+    parser.add_argument('--batch', type=int, default=256)
     parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--l2', type=float, default=1e-4)

@@ -2,6 +2,15 @@ import torch
 from torch import nn
 
 
+class Factorization(nn.Module):
+    def __init__(self, K, F):
+        super().__init__()
+        self.weight = nn.Parameter(torch.randn(K, F), requires_grad=True)
+    
+    def forward(self, x):
+        return torch.matmul(x, self.weight)
+
+
 class MF(nn.Module):
     def __init__(self, N, M, F):
         super().__init__()
@@ -9,23 +18,21 @@ class MF(nn.Module):
         self.M = M
         self.F = F
 
-        self.userEmbedding = nn.Embedding(M, F)
-        self.itemEmbedding = nn.Embedding(N, F)
+        self.userEmbedding = Factorization(M, F) 
+        self.itemEmbedding = Factorization(N, F)
 
     def getUserEmbedding(self, userVectors):
-        W = self.userEmbedding.weight
-        return userVectors @ W
+        return userVectors @ self.userEmbedding.weight.detach().numpy()
     
     def getItemEmbedding(self, itemVectors):
-        W = self.itemEmbedding.weight
-        return itemVectors @ W
+        return itemVectors @ self.itemEmbedding.weight.detach().numpy()
 
 
 class MFBCE(MF):
     def __init__(self, N, M, F):
         super().__init__(N, M, F)
 
-    def forward(self, user, item):
+    def forward(self, userVec, itemVec):
         '''
 Arguments:
     user: a M-dim tensor
@@ -33,10 +40,11 @@ Arguments:
 Returns:
     a (batchsize,) tensor, representing the score
         '''
-        userEmb = self.userEmbedding(user)
-        itemEmb = self.itemEmbedding(item)
+        userEmb = self.userEmbedding(userVec)
+        itemEmb = self.itemEmbedding(itemVec)
 
         return torch.sigmoid(torch.sum(userEmb * itemEmb, dim=1)).reshape(-1, 1)
+
 
 class MFBPR(MF):
     def __init__(self, N, M, F):
