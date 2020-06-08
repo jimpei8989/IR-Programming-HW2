@@ -50,6 +50,7 @@ class BCEDataset(torch.utils.data.Dataset):
             uid, iid = negRD()
             return self.mat[uid], self.mat[:, iid], torch.FloatTensor(0)
 
+
 class BPRDataset(torch.utils.data.Dataset):
     def __init__(self, mat, datadir, name='train', epochSize = 1000000):
         # Provided in stackoverflow
@@ -64,18 +65,14 @@ class BPRDataset(torch.utils.data.Dataset):
         for uid, (posList, negList) in enumerate(data):
             self.data += [(uid, p, n) for p in posList for n in negList]
 
-        self.epochSize = int(epochSize) if epochSize > 1 else int(len(self.data) * epochSize)
-
         print(f'> Data size: {len(self.data)}')
 
-        self.pool = deque()
+        self.epochSize = int(epochSize) if epochSize > 1 else int(len(self.data) * epochSize)
+        self.RD = RandChoice(self.data)
 
     def __len__(self):
         return self.epochSize
 
     def __getitem__(self, index):
-        if len(self.pool) == 0:
-            self.pool.extend(np.random.choice(len(self.data), size = self.epochSize))
-
-        uid, pos, neg =  self.data[self.pool.popleft()]
+        uid, pos, neg = self.RD()
         return self.mat[uid], self.mat[:, pos], self.mat[:, neg]
