@@ -6,6 +6,18 @@ from collections import deque
 
 from Modules.utils import *
 
+
+class RandChoice:
+    def __init__(self, a, cacheSize = 1000000):
+        self.a = range(a)
+        self.pool = deque()
+    
+    def __call__(self):
+        if len(self.pool) == 0:
+            self.pool.extend(np.random.choice(self.a, size = self.cacheSize))
+        return self.pool.popleft()
+
+
 class BCEDataset(torch.utils.data.Dataset):
     def __init__(self, mat, datadir, name='train'):
         super().__init__()
@@ -13,28 +25,30 @@ class BCEDataset(torch.utils.data.Dataset):
 
         # list of (posList, negList)
         data = pickleLoad(os.path.join(datadir, f'{name}.pkl'))
-        self.X = []
-        self.Y = []
+        self.posX, self.posY = [], []
+        self.negX, self.negY = [], []
 
         for uid, (posList, negList) in enumerate(data):
             for itemId in posList:
-                self.X.append((uid, itemId))
-                self.Y.append(1)
+                self.posX.append((uid, itemId))
             for itemId in negList:
-                self.X.append((uid, itemId))
-                self.Y.append(0)
+                self.negX.append((uid, itemId))
 
-        self.X = np.stack(self.X)
-        self.Y = torch.FloatTensor(np.stack(self.Y)).reshape(-1, 1)
+        self.numPositive = len(posList)
+        print(f'> Load {name} data. Positive size: {self.numPositive}')
 
-        print(f'> Load {name} data. Size: {self.X.shape[0]}')
+        self.negRD = RandChoice(self.negX)
 
     def __len__(self):
-        return self.X.shape[0]
+        return self.numPositive * 2
 
     def __getitem__(self, idx):
-        uid, iid = self.X[idx]
-        return self.mat[uid], self.mat[:, iid], self.Y[idx]
+        if idx < self.numPositive:
+            uid, iid = self.posX[idx]
+            return self.mat[uid], self.mat[:, iid], torch.FloatTensor(1)
+        else:
+            uid, iid = negRD()
+            return self.mat[uid], self.mat[:, iid], torch.FloatTensor(0)
 
 class BPRDataset(torch.utils.data.Dataset):
     def __init__(self, mat, datadir, name='train', epochSize = 1000000):

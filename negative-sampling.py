@@ -58,14 +58,18 @@ def main():
         ri = RandInt(high = M)
         for uid, pos in enumerate(data):
             allItems = set(pos)
-            neg = []
-            for _ in range(len(pos)):
-                while True:
-                    negItem = ri()
-                    if negItem not in items:
-                        break
-                neg.append(negItem)
-                allItems.add(negItem)
+            if args.method == 'fixed':
+                neg = []
+                for _ in range(len(pos)):
+                    while True:
+                        negItem = ri()
+                        if negItem not in items:
+                            break
+                    neg.append(negItem)
+                    allItems.add(negItem)
+            elif args.method == 'all':
+                neg = [item for item in range(M) if item not in pos]
+
             allData.append((pos, neg))
 
     # Split train / validation

@@ -1,16 +1,6 @@
 import torch
 from torch import nn
 
-class Embedding(nn.Module):
-    def __init__(self, K, F):
-        super().__init__()
-        self.W = torch.nn.Parameter(torch.randn(K, F), requires_grad=True)
-
-    def forward(self, x):
-        return torch.matmul(x, self.W)
-
-    def getEmbedding(self):
-        return self.W.detach().numpy()
 
 class MF(nn.Module):
     def __init__(self, N, M, F):
@@ -19,16 +9,17 @@ class MF(nn.Module):
         self.M = M
         self.F = F
 
-        self.userEmbedding = Embedding(M, F)
-        self.itemEmbedding = Embedding(N, F)
+        self.userEmbedding = nn.Embedding(M, F)
+        self.itemEmbedding = nn.Embedding(N, F)
 
     def getUserEmbedding(self, userVectors):
-        W = self.userEmbedding.getEmbedding()
+        W = self.userEmbedding.weight
         return userVectors @ W
     
     def getItemEmbedding(self, itemVectors):
-        W = self.itemEmbedding.getEmbedding()
+        W = self.itemEmbedding.weight
         return itemVectors @ W
+
 
 class MFBCE(MF):
     def __init__(self, N, M, F):
@@ -45,7 +36,7 @@ Returns:
         userEmb = self.userEmbedding(user)
         itemEmb = self.itemEmbedding(item)
 
-        return torch.sigmoid(torch.sum(userEmb * itemEmb, dim = 1)).reshape(-1, 1)
+        return torch.sigmoid(torch.sum(userEmb * itemEmb, dim=1)).reshape(-1, 1)
 
 class MFBPR(MF):
     def __init__(self, N, M, F):
