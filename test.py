@@ -18,6 +18,13 @@ def main():
         print(f'! Warning: directory {modelDir} not found......')
         exit()
 
+    if args.atEpoch == -1:
+        modelPath = os.path.join(modelDir, 'final-weight.pth')
+        predictionPath = os.path.join(modelDir, 'prediction.csv')
+    else:
+        modelPath = os.path.join(modelDir, f'checkpoint-{args.atEpoch:03d}.pth')
+        predictionPath = os.path.join(modelDir, f'prediction-{args.atEpoch:03d}.csv')
+
     with EventTimer('Load data / model'):
         mat = np.load(args.matrix)
         N, M = mat.shape
@@ -25,7 +32,7 @@ def main():
 
     with EventTimer('Inference'):
         model = MF(N, M, args.latentDim)
-        model.load_state_dict(torch.load(args.weight))
+        model.load_state_dict(torch.load(modelPath))
 
         userEmbeddings = model.getUserEmbedding(mat)    # Shape (N, F)
         itemEmbeddings = model.getItemEmbedding(mat.T)  # Shape (M, F)
@@ -41,13 +48,13 @@ def main():
     
     with EventTimer('Generate prediction'):
         print(len(predictions), len(predictions[0]))
-        genPredCSV(predictions, os.path.join(modelDir, 'prediction.csv'))
+        genPredCSV(predictions, predictionPath)
 
 def parseArguments():
     parser = ArgumentParser()
     parser.add_argument('--name')
     parser.add_argument('--matrix')
-    parser.add_argument('--weight')
+    parser.add_argument('--atEpoch', type=int, default=-1)
     parser.add_argument('--latentDim', type=int, default=256)
     return parser.parse_args()
 
