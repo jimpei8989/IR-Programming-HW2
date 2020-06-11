@@ -30,10 +30,13 @@ def main():
         N, M = mat.shape
         print(N, M)
 
-    with EventTimer('Inference'):
         model = MF(N, M, args.latentDim)
-        model.load_state_dict(torch.load(modelPath))
+        try:
+            model.load_state_dict(torch.load(modelPath))
+        except:
+            pass
 
+    with EventTimer('Inference'):
         userEmbeddings = model.getUserEmbedding(mat)    # Shape (N, F)
         itemEmbeddings = model.getItemEmbedding(mat.T)  # Shape (M, F)
 
@@ -45,14 +48,29 @@ def main():
             recommendations = np.argsort(pred)[::-1]
             recommendations = [item for item in recommendations if truth[item] == 0]
             predictions.append(recommendations[:50])
-    
+
     with EventTimer('Generate prediction'):
         print(len(predictions), len(predictions[0]))
         genPredCSV(predictions, predictionPath)
 
+
+    with EventTimer('Validation'):
+        trainData = pickleLoad(os.path.join(args.dataDir, 'train.pkl'))
+        validData = pickleLoad(os.path.join(args.dataDir, 'valid.pkl'))
+
+        validPredictions = []
+        validMAP = []
+        for user, (scores, (trainPos, trainNeg), (validPos, validNeg)) in enumerate(zip(predMatrix, trainData, validData)):
+            recommendations = np.argsort(scores)[::-1]
+            recommendations = [item for item in recommendations if item not in trainPos][:50]
+            validMAP.append(AP(recommendations, validPos))
+
+        print(f'> Validation MAP: {np.mean(validMAP)}')
+    
 def parseArguments():
     parser = ArgumentParser()
     parser.add_argument('--name')
+    parser.add_argument('--dataDir')
     parser.add_argument('--matrix')
     parser.add_argument('--atEpoch', type=int, default=-1)
     parser.add_argument('--latentDim', type=int, default=256)

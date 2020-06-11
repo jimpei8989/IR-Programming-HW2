@@ -35,6 +35,14 @@ def genPredCSV(predictions, file):
         for i, row in enumerate(predictions):
             print(f'{i},{" ".join(map(str, row))}', file = f)
 
+def AP(pred, truth):
+    hits, score = 0, 0.0
+    for i, item in enumerate(pred):
+        if item in truth:
+            hits += 1
+            score += hits / (i + 1)
+    return score / len(truth)
+
 def pickleSave(obj, file):
     with open(file, 'wb') as f:
         pickle.dump(obj, f)

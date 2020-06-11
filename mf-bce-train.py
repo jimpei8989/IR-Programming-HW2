@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from Modules.utils import *
-from Modules.data import BCEDataset
+from Modules.data import BCEDatasetSample, BCEDatasetFixed
 from Modules.mf import MFBCE
 
 def main():
@@ -38,10 +38,15 @@ def main():
         # Should be 4454 * 3260
         N, M = mat.shape
 
+        if args.dataset == 'sample':
+            BCEDataset = BCEDatasetSample
+        elif args.dataset == 'fixed':
+            BCEDataset = BCEDatasetFixed
+
         trainDataset = BCEDataset(mat, args.datadir, 'train')
         validDataset = BCEDataset(mat, args.datadir, 'valid')
-        trainDataloader = DataLoader(trainDataset, batch_size = args.batch, shuffle = True)
-        validDataloader = DataLoader(validDataset, batch_size = args.batch, shuffle = False)
+        trainDataloader = DataLoader(trainDataset, batch_size = args.batch, shuffle = True, num_workers=4)
+        validDataloader = DataLoader(validDataset, batch_size = args.batch, shuffle = False, num_workers=4)
 
     with EventTimer('Train Model'):
         model = MFBCE(N, M, args.latentDim).cuda()
@@ -96,6 +101,7 @@ def parseArguments():
     parser.add_argument('--name')
     parser.add_argument('--datadir')
     parser.add_argument('--matrix')
+    parser.add_argument('--dataset', type=str, default='sample')
     parser.add_argument('--latentDim', type=int, default=256)
     parser.add_argument('--batch', type=int, default=256)
     parser.add_argument('--lr', type=float, default=1e-3)
