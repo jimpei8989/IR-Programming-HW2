@@ -62,7 +62,7 @@ def main():
                 if train: model.train()
                 else: model.eval()
 
-                for userVec, itemVec, y in tqdm(dataloader):
+                for userVec, itemVec, y in tqdm(dataloader, ncols=80):
                     if train: optimizer.zero_grad()
 
                     output = model(userVec.cuda(), itemVec.cuda()).cpu()
