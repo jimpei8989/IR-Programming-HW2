@@ -48,8 +48,8 @@ def main():
 
         trainDataset = BPRDataset(mat, args.datadir, 'train', args.epochSize)
         validDataset = BPRDataset(mat, args.datadir, 'valid', 256000)
-        trainDataloader = DataLoader(trainDataset, batch_size = args.batch, shuffle = True, num_workers=8)
-        validDataloader = DataLoader(validDataset, batch_size = args.batch, shuffle = False, num_workers=8)
+        trainDataloader = DataLoader(trainDataset, batch_size = args.batch, shuffle = True)
+        validDataloader = DataLoader(validDataset, batch_size = args.batch, shuffle = False)
 
     with EventTimer('Load Model'):
         model = MFBPR(N, M, args.latentDim).cuda()
