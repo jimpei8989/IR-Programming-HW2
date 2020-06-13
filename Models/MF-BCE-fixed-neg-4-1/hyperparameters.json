@@ -1,0 +1,1 @@
+{"latentDims": 128, "epochs": 80, "lr": 0.005, "batch": 256}

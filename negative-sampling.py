@@ -60,7 +60,7 @@ def main():
             allItems = set(pos)
             if args.method == 'fixed':
                 neg = []
-                for _ in range(len(pos)):
+                for _ in range(int(args.ratio * len(pos))):
                     while True:
                         negItem = ri()
                         if negItem not in items:
@@ -92,7 +92,6 @@ def parseArguments():
     parser.add_argument('--datadir', type=str, help='Data directory')
     parser.add_argument('--name', type=str, help='Name for this sampling')
     parser.add_argument('--ratio', type=float, default=1.0, help='Ratio between positive & negative sampling')
-    parser.add_argument('--size', type=int, default=-1, help='Number of negative samplings')
     parser.add_argument('--method', type=str)
     return parser.parse_args()
 
