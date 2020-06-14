@@ -1,6 +1,8 @@
-if [[ $# -ne 1 ]]; do
+#! /usr/bin/env bash
+
+if [[ $# -ne 1 ]]; then
     echo -e "usage:\t./run.sh OUTPUT_PATH"
-done
+fi
 
 outputPath=$1
 model="MF-BPR-Best"
