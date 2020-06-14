@@ -30,4 +30,4 @@ TBD
 
 ### Report
 
-☞ [report.md](./report.md) / [report.pdf](report.pdf)
+☞ [report.md](./report.md) / [report.pdf](Report.pdf)
