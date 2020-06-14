@@ -25,6 +25,9 @@ def main():
         modelPath = os.path.join(modelDir, f'checkpoint-{args.atEpoch:03d}.pth')
         predictionPath = os.path.join(modelDir, f'prediction-{args.atEpoch:03d}.csv')
 
+    if args.output != '':
+        predictionPath = args.output
+
     with EventTimer('Load data / model'):
         mat = np.load(args.matrix)
         N, M = mat.shape
@@ -76,6 +79,7 @@ def parseArguments():
     parser.add_argument('--atEpoch', type=int, default=-1)
     parser.add_argument('--latentDim', type=int, default=256)
     parser.add_argument('--validation', action='store_true')
+    parser.add_argument('--output', type=str, default='')
     return parser.parse_args()
 
 if __name__ == '__main__':
