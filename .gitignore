@@ -7,3 +7,6 @@ __pycache__/
 
 WM_Prog2.pdf
 
+checkpoint-*.pth
+prediction.csv
+
